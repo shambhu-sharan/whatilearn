@@ -1,0 +1,46 @@
+Create the container
+Finally, the interesting part. What we are going to do next is deploy a simple HTML page and serve it through Google Cloud Run. Let’s first create a new directory and organize things a bit:
+
+$ mkdir website
+$ cd website
+$ mkdir html nginx
+In the html directory create an index.html file with this content:
+
+<html>
+<body>Hello from Google Cloud Run!</body>
+</html>
+To serve this file we just need a web server. We are going to use nginx. I said that Google Cloud Run uses containers, which means we can simply use an existing nginx container. The only problem with the default nginx container is that it serves files on port 80, however Google Cloud Run expects containers to serve things on port 8080. So, we will just provide a new configuration file to nginx later.
+
+Create a new Dockerfile inside the website directory:
+
+$ cat Dockerfile
+FROM nginx
+COPY html /usr/share/nginx/html
+COPY nginx/default.conf /etc/nginx/conf.d/default.conf
+In this Dockerfile we are just telling Docker to create a new container based on the nginx container and we are adding our html directory (that contains our index.html) plus an nginx configuration file that we will create next.
+
+In the nginx directory create a default.conf file (note how we listen on port 8080):
+
+$ cat nginx/default.conf
+server {
+    listen       8080;
+    server_name  localhost;
+    location / {
+        root   /usr/share/nginx/html;
+        index  index.html index.htm;
+    }
+    # redirect server error pages to the static page /50x.html
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+}
+After all this, you should have this directory structure:
+
+$ tree
+.
+├── Dockerfile
+├── html
+│   └── index.html
+└── nginx
+    └── default.conf
